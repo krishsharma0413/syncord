@@ -1,0 +1,8 @@
+venv/
+*.db
+files/*
+setup.yaml
+__pycache__/
+files/*
+testing.py
+build/
