@@ -26,8 +26,14 @@ class SQliteDB:
         folder_name: str,
         file_size_bytes: int
     ):
-        self.cursor.execute('''INSERT INTO syncord (parition_number, parition_uuid, message_id, file_name, folder_name, file_size_bytes) VALUES (?, ?, ?, ?, ?, ?)''', 
-                            (partition_number, partition_uuid, message_id, file_name, folder_name, file_size_bytes))
+        
+        #
+        self.cursor.execute(
+            '''INSERT INTO syncord (parition_number, parition_uuid, message_id, file_name, folder_name, file_size_bytes) VALUES (?, ?, ?, ?, ?, ?)''', 
+            (partition_number, partition_uuid, message_id, file_name, folder_name, file_size_bytes)
+        )
+
+        #
         self.connection.commit()
     
     def get_file_by_message_id(self, message_id: str):
@@ -41,7 +47,16 @@ class SQliteDB:
     def get_file_by_file_path(self, folder_name: str, file_name: str):
         self.cursor.execute('''SELECT * FROM syncord WHERE folder_name = ? AND file_name = ?''', (folder_name, file_name))
         return self.cursor.fetchall()
-    
+
+    def delete_file_by_file_path(self, folder_name:str, file_name:str):
+ 
+        self.cursor.execute(
+            """DELETE FROM syncord WHERE file_name = ? AND folder_name = ?""", 
+            (file_name, folder_name)
+        )
+        
+        self.connection.commit()
+
     def delete_file_by_message_id(self, message_id: str):
         self.cursor.execute('''DELETE FROM syncord WHERE message_id = ?''', (message_id,))
         self.connection.commit()

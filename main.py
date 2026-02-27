@@ -1,30 +1,60 @@
-import argparse
-import os
-from core.db_manager import SQliteDB
 from core.setup import setup, set_bot_token, set_encryption_key, set_guild_id
-from default import BASE_DIR
 from core.partition import partition_file, download_file_by_path
 from core.tui import start_dashboard, show_stats
+from core.db_manager import SQliteDB
+from core.setup import BASE_DIR
+from shutil import rmtree
+import argparse
+import os
 
-# db = SQliteDB()
-# db.clear_database()
+rmtree(BASE_DIR/"files", True)
+
+path_filters = [
+    '\\__pycache__', 
+    '\\.git', 
+    '\\$RECYCLE.BIN'
+]
 
 def upload_file(path):
+
     # check if path is file or directory first
     absolute_path = os.path.abspath(path)
    
     if os.path.isdir(absolute_path):
-        print("Directory provided, processing files inside the directory \
-into it's own folder.")
-        base = ""
+
+        print("Directory provided, processing files inside the directory into it's own folder.")
+
+        base: str = ""
+
         for root, _, files in os.walk(absolute_path):
+            
             base += os.path.basename(root) + "/"
+            
             for file in files:
-                print(f"Found file: {file} in {root}, processing...")
-                file_path = os.path.join(root, file)
-                partition_file(file_path, folder_name=base.rstrip("/"))
+
+                file_path:str = os.path.join(root, file).lower()
+
+                real_path:str = os.path.realpath(file_path).lower()
+
+                NOTIGNORED = (not any(f in root for f in path_filters))
+                
+                RESOLUTE = (file_path == real_path)
+                
+                # If the path does not contain any of the ignored strings
+                if NOTIGNORED and RESOLUTE:
+
+                    print(f'Uploading: {file_path}')
+
+                    partition_file(file_path, base.rstrip("/"))
+
+                else:
+
+                    print(f'Skipped: {NOTIGNORED=} | {RESOLUTE=} | {file_path}')
+
     else:
-        print(f"Uploading file: {absolute_path}")
+        
+        print(f'Uploading: {absolute_path}')
+        
         partition_file(absolute_path)
 
 def download_file(path):

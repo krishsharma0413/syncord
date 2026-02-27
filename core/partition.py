@@ -1,10 +1,10 @@
-from uuid import uuid4
-import os
-from math import ceil
 from core.discord_handler import upload_files, bulk_download_files
-from core.db_manager import SQliteDB
 from core.encrypter import encrypted_data, decrypted_data
+from core.db_manager import SQliteDB
 from core.setup import BASE_DIR
+from uuid import uuid4
+from math import ceil
+import os
 
 PER_PARTITION_SIZE = int(5 * 1024 * 1024)  # 5 MB
 
@@ -91,18 +91,24 @@ def partition_file(file_path, folder_name="default"):
 
     files = []
 
-    with open(file_path, "rb") as bin_file:
-        for x in range(number_of_partitions):
-            with open(BASE_DIR / "files" / partition_uuid / f"{x}.bin", "wb") as temp_bin:
-                # ensures that anyone cannot just download your data
-                # from discord and compile themselves
-                non_ecrypt = bin_file.read(PER_PARTITION_SIZE)
-                encrypt = encrypted_data(non_ecrypt)
-                temp_bin.write(encrypt)
-                files.append(BASE_DIR / "files" / partition_uuid / f"{x}.bin")
-                print(f"Created partition number {x}: {BASE_DIR / 'files' / partition_uuid / f'{x}.bin'}")
+    try:
+        with open(file_path, "rb") as bin_file:
 
-    return upload_partitions(files, partition_uuid, file_path, folder_name)
+            for x in range(number_of_partitions):
+            
+                with open(BASE_DIR / "files" / partition_uuid / f"{x}.bin", "wb") as temp_bin:
+                    # ensures that anyone cannot just download your data
+                    # from discord and compile themselves
+                    non_ecrypt = bin_file.read(PER_PARTITION_SIZE)
+                    encrypt = encrypted_data(non_ecrypt)
+                    temp_bin.write(encrypt)
+                    files.append(BASE_DIR / "files" / partition_uuid / f"{x}.bin")
+                    print(f"Created partition number {x}: {BASE_DIR / 'files' / partition_uuid / f'{x}.bin'}")
+
+        return upload_partitions(files, partition_uuid, file_path, folder_name)
+    
+    except PermissionError as e:
+        print(e)
 
 
 def upload_partitions(files: list[str], partition_uuid: str, file_path: str, folder_name: str):
@@ -115,12 +121,12 @@ def upload_partitions(files: list[str], partition_uuid: str, file_path: str, fol
     i = 0
     for file, msg_id in zip(files, message_ids):
         database.add_file(
-            partition_number=i,
-            partition_uuid=partition_uuid,
-            message_id=msg_id,
-            file_name=file_path.split("/")[-1].split("\\")[-1],
-            folder_name=folder_name,
-            file_size_bytes=os.stat(file).st_size,
+            partition_number = i,
+            partition_uuid = partition_uuid,
+            message_id = msg_id,
+            file_name = file_path.split("/")[-1].split("\\")[-1],
+            folder_name = folder_name,
+            file_size_bytes = os.stat(file).st_size
         )
         print(f"Saved partition {i} info to database.")
         i += 1

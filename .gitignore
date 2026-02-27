@@ -8,3 +8,5 @@ testing.py
 build/
 dist/*
 bad_apple.mp4
+syncord.db-shm
+syncord.db-wal
